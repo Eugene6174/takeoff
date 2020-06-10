@@ -39,6 +39,8 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
 
 ![cold migrate overview](../pictures/cold_migrate/cold_migrate_overview.png)
 
+![cold migrate state transmit](../pictures/cold_migrate/cold_migrate_state_transmit.png)
+
 ### Workflow
 
 **1 nova-api(nova.compute.api.API.resize)**
@@ -48,14 +50,14 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
   * migrate->flavor_id is None
   * resize  ->new flavor_id
 * quota  reserve if resize
-* save instance task_state to **"resize_prep"**
+* save instance task_state to **resize_prep**
 * allow_resize_to_same_host
 * rpc cast to conductor migrate_server **goto 2**
 
 **2  nova-conductor**
 * set request_spec
-* rpc call select_destinations -> 3
-* rpc cast prep_resize to destionation host -> 4
+* rpc call select_destinations **goto 3**
+* rpc cast prep_resize to destionation host nova-compute **goto 4**
 
 **3 nova-scheduler**
 * select destinations by request_specs
@@ -65,12 +67,12 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
 * check support migrate to same host
 * record "old_vm_state" to system metadata for set the resized/reverted instance back to the same state
 * resize claim
-* rpc cast resize instance to source nova-compute -> 5
+* rpc cast resize instance to source host nova-compute **goto 5**
 
 **5 nova-compute source(nova.compute.manager.ComputeManager.resize_instance)**
 * get network info
 * save migrate status to "migrating"
-* save instance task_state to "resize_migrating"
+* save instance task_state to **resize_migrating**
 * notify about instance usage "compute.instance.resize.start"
 * driver migrate disk and power off
   * check boot from volume
@@ -83,15 +85,15 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
 * call cinder api to terminate volume connections
 * save migration status to "post-migrating"
 * save instance host and node to destination host
-* save instance task_state to "resize_migrated"
-* rpc cast  finsh resize to destination compute -> 6
+* save instance task_state to **resize_migrated**
+* rpc cast  finsh resize to destination host nova-compute **goto 6**
 * notify about instance usage "compute.instance.resize.end"
 
 **6 nova-compute destination(nova.compute.manager.ComputeManager.finish_resize)**
 * call neutron api to setup network on host
 * call neutron  api migrate instance finish
 * call neutron api get instance network information
-* save instance task_state to "resize_finish"
+* save instance task_state to **resize_finish**
 * notify about instance usage "compute.instnace.finsh_resize.start"
 * get block device information
   * call cinder api to initialize connection
@@ -101,12 +103,12 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
   * create config drive
   * resize disk if resize instance
   * get guest xml
-     * connect volumes
+    * connect volumes
   * create domain and network
   * power on if old vm state was power on
 * save migration status to "finished"
-* save instance vm_state to "resized"  and task_state to None
-* update scheduler instance info -> 7
+* save instance vm_state to **resized** and **task_state to None**
+* update scheduler instance info **goto 7**
 * notify about instance usage "compute.instnace.finish_resize.end"
 * commit quota if resize
 
@@ -116,7 +118,7 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
 **8 nova-api(nova.compute.api.API.confirm_resize)**
 * check vm_state in [resized]
 * save migration status "confirming"
-* rpc cast confirm resize to source compute -> 9
+* rpc cast confirm resize to source nova-compute **goto 9**
 
 **9 nova-compute source(nova.compute.manager.ComputeManager.confirm_resize)**
 * check migration status
@@ -131,15 +133,15 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
   * unfilter instance
 * save migration status "confirmed"
 * resource tracer drop move claim
-* save instance task_state to None and vm state to "active" or "shutdown" according to its power state
+* save instance **task_state to None** and **vm_state to active or stopped** according to its power state
 * notify about instace usage "compute.instance.resize.confirm.end"
 * commit quota
 
 **10 nova-api(nova.compute.api.API.revert_resize)**
 * check vm_state in [resized]
-* save instance task_state to "resize_reverting"
+* save instance task_state to **resize_reverting**
 * save migration status to "reverting"
-* rpc cast revert resize to destination compute -> 11
+* rpc cast revert resize to destination nova-compute **goto 11**
 
 **11 nova-compute destination(nova.compute.manager.ComputeManager.revert_resize)**
 * setup network on host, tear down
@@ -152,7 +154,7 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
 * call volume api to terminate volume connections
 * save migration status to "reverted"
 * resource tracker drop move claim
-* rpc cast finish revert resize to source compute -> 12
+* rpc cast finish revert resize to source nova-compute **goto 12**
 
 **12 nova-compute source(nova.compute.manager.ComputeManager.finish_revert_resize)**
 * notify about instance usage "compute.instnace.revert.resize.start"
@@ -168,6 +170,6 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
   * get guest xml
   * create domain and network
   * wait if power on
-* save instance vm_state according to its power state, shutdown if power was off, active if power on,  task_state to None
+* save instance vm_state according to its power state, **stopped if power was off, active if power on,  task_state to None**
 * notify about instance usage "compute.instance.revert.resize.end"
 * quota commit
