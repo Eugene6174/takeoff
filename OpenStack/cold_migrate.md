@@ -100,21 +100,25 @@ Logs:
 ```
 
 **5 nova-compute source(nova.compute.manager.ComputeManager.resize_instance)**
+
+![cold migrate resize instance](../pictures/cold_migrate/cold_migrate_resize_instance.png)
+
 * get network info
 * save migrate status to "migrating"
 * save instance task_state to **resize_migrating**
 * notify about instance usage "compute.instance.resize.start"
 * driver migrate disk and power off
   * check boot from volume
+  * check images_type
   * check share storage
-  * power off
+  * **power off**
   * get block device mapping
-  * disconnect volumes
+  * **disconnect volumes**
   * rename instance base dir to name with "_resize" suffix
   * copy image to destinantion host
 * call cinder api to terminate volume connections
 * save migration status to "post-migrating"
-* save instance host and node to destination host
+* **save instance host and node to destination host**
 * save instance task_state to **resize_migrated**
 * rpc cast  finsh resize to destination host nova-compute **goto 6**
 * notify about instance usage "compute.instance.resize.end"
@@ -171,20 +175,23 @@ Logs:
 ```
 
 **6 nova-compute destination(nova.compute.manager.ComputeManager.finish_resize)**
+
+![cold migrate finish resize](../pictures/cold_migrate/cold_migrate_finish_resize.png)
+
 * call neutron api to setup network on host
-* call neutron  api migrate instance finish
+* call neutron api migrate instance finish
 * call neutron api get instance network information
 * save instance task_state to **resize_finish**
 * notify about instance usage "compute.instnace.finsh_resize.start"
 * get block device information
-  * call cinder api to initialize connection
+  * **call cinder api to initialize connection**
 * driver finish migration
   * create image if backing file missed, create disk snapshot
   * ensure console log for instnace
   * create config drive
   * resize disk if resize instance
   * get guest xml
-    * connect volumes
+    * **connect volumes**
   * create domain and network
   * power on if old vm state was power on
 * save migration status to "finished"
