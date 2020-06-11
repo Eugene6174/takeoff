@@ -52,7 +52,7 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
 * quota  reserve if resize
 * save instance task_state to **resize_prep**
 * allow_resize_to_same_host
-* rpc cast to conductor migrate_server **goto 2**
+* rpc call to conductor migrate_server **goto 2**
 
 **2  nova-conductor**
 * set request_spec
