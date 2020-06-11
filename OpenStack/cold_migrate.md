@@ -179,7 +179,10 @@ Logs:
 ![cold migrate finish resize](../pictures/cold_migrate/cold_migrate_finish_resize.png)
 
 * call neutron api to setup network on host
+  * check neutron api port binding extension
 * call neutron api migrate instance finish
+  * list port
+  * **update port binding**
 * call neutron api get instance network information
 * save instance task_state to **resize_finish**
 * notify about instance usage "compute.instnace.finsh_resize.start"
