@@ -4,6 +4,8 @@
 
 ### Workflow
 
+**This is bases on Newton**
+
 **1 nova-api(nova.compute.api.API.evacuate)**
 * check vm_state in [active, stopped, error]
 * check source host nova-compute service is down

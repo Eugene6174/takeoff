@@ -37,6 +37,9 @@ Error response codes: badRequest(400), unauthorized(401), forbidden(403) itemNot
 
 ### Workflow
 
+**This is bases on Newton**
+
+
 **1 nova-api(nova.compute.api.API.live_migrate)**
 * check vm_state in [active, puased]
 * save instance task_state to **migrating**
