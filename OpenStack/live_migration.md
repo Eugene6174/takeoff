@@ -111,6 +111,9 @@ Logs:
 ---
 
 **6 nova-compute source(nova.compute.mananger.ComputeManager.live_migration)**
+
+![live migration](../pictures/live_migration/live_migration.png)
+
 * save migration status to "queued"
 * save migration status to "preparing"
 * rpc call destination nova-compute to do pre_live_migration **goto 7**
@@ -131,7 +134,7 @@ Logs:
     * call cinder api to initialize volume connection
     * disconnect volumes
   * call cinder api to terminate volume connection
-  * get instance network info
+  * call network api to get instance network info
   * notify about instnace usage "compute.instance.live_migration._post.start"
   * driver unfilter instance
   * call network api migrate instance start
@@ -292,6 +295,9 @@ Logs:
 ```
 
 **7 nova-compute source(nova.compute.mananger.ComputeManager.pre_live_migration)**
+
+![pre live migration](../pictures/live_migration/pre_live_migration.png)
+
 * call cinder api to initialize volume connection
 * call network api to get instance network info
 * notify about instance usage "compute.instance.live_migraton.pre.start"
@@ -363,6 +369,9 @@ Logs:
 
 
 **8 nova-compute source(nova.compute.mananger.ComputeManager.post_live_migration_at_destination)**
+
+![post live migration at destination](../pictures/live_migration/post_live_migration_at_destination.png)
+
 * call network api to setup network on destination host
 * call network api migrate instance finish on destination
 * call network api get instance network info
