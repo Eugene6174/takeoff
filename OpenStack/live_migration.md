@@ -470,6 +470,7 @@ Logs:
 * live migration data
   * RAM: instance.flavor.memory * Mi/Gi, take 2 if the result is small than 2
   * DISK: migration data will contain disk data if `migrate_block` is true, sum the GB of each disk , take 2 if the disk is small than 2
+
   MIGRATE_GB = RAM + DISK
 
 * live migration timeout
@@ -488,23 +489,23 @@ Logs:
 
 * live migration down time
 
-This is determined by three configurations `live_migration_downtime(500ms)`/`live_migration_downtime_steps(10)`/`live_migration_downtime_delay(75s)`
+  This is determined by three configurations `live_migration_downtime(500ms)`/`live_migration_downtime_steps(10)`/`live_migration_downtime_delay(75s)`
 
 
 ```python
-        delay = int(delay * data_gb)
+      delay = int(delay * data_gb)
 
-        offset = downtime / float(steps + 1)
-        base = (downtime - offset) ** (1 / float(steps))
+      offset = downtime / float(steps + 1)
+      base = (downtime - offset) ** (1 / float(steps))
 
-        for i in range(steps + 1):
-            yield (int(delay * i), int(offset + base ** i))
+      for i in range(steps + 1):
+          yield (int(delay * i), int(offset + base ** i))
 
 ```
+  For example, with 10 steps, 75 second step delay, 2 GB
+  of RAM and 500ms target maximum downtime, the downtime will
+  be increased every 150 seconds in the following progression:
 
-For example, with 10 steps, 75 second step delay, 2 GB
-of RAM and 500ms target maximum downtime, the downtime will
-be increased every 150 seconds in the following progression:
 ```
   -    0 seconds -> set downtime to  46ms
   -  150 seconds -> set downtime to  47ms
