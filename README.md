@@ -12,3 +12,5 @@ This project is going to share same experiences of cloud computing.
 
 ### Cinder
 * [Create Backup](OpenStack/cinder_backup_create.md)
+* [Restore Backup](OpenStack/cinder_backup_restore.md)
+
